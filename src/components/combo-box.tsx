@@ -69,7 +69,7 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
 
     switch (key) {
       case 'Enter':
-        if (showDropdown && options) {
+        if (showDropdown && options && arrowCounter > -1) {
           onItemClick(options[arrowCounter].value);
         }
         setShowDropdown(!showDropdown);
