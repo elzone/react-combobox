@@ -1,24 +1,20 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import ComboBox, { IComboBox } from './components/combo-box';
 
 function App() {
+  const comboBoxItems: IComboBox[] = [
+    { label: 'Apple', value: 'Apple'},
+    { label: 'Banana', value: 'Banana'},
+    { label: 'Blueberry', value: 'Blueberry'},
+    { label: 'Mango', value: 'Mango'}
+  ]
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="content">
+        <ComboBox items={comboBoxItems} />
+      </div>
     </div>
   );
 }
