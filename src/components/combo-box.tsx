@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useCallback, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './combo-box.css';
 import { useOnClickOutside } from '../hooks/hooks';
 
@@ -25,16 +25,25 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
   const [arrowCounter, setArrowCounter] = useState<number>(-1);
   const elRef = useRef(null);
   useOnClickOutside(elRef, () => setShowDropdown(false));
+  const timeOutIntervalRef = useRef();
 
-  const handleInputClick = useCallback(() => {
-    setShowDropdown(true);
+  useEffect(() => {
+    return () => {
+      if (timeOutIntervalRef.current) {
+        clearTimeout(timeOutIntervalRef.current);
+      }
+    }
   }, []);
 
-  const onItemClick = useCallback((option: IComboBox) => {
-    setSearchValue(option.value);
+  const handleInputClick = () => {
+    setShowDropdown(true);
+  };
+
+  const onItemClick = (value: string) => {
+    setSearchValue(value);
     setShowDropdown(false);
     setArrowCounter(-1);
-  }, []);
+  };
 
   const isSelected = (option: IComboBox) => {
     if (!searchValue) {
@@ -44,9 +53,9 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
     return searchValue === option.value;
   };
 
-  const onSearch = useCallback((e: ChangeEvent) => {
+  const onSearch = (e: ChangeEvent) => {
     setSearchValue((e.target as HTMLInputElement).value);
-  }, []);
+  };
 
   const options = useMemo(() => {
     if (!searchValue) {
@@ -60,20 +69,26 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
   }, [items, searchValue]);
 
   // @ts-ignore
-  const onInputBlur = useCallback((e: FocusEvent<HTMLInputElement>) => {
+  const onInputBlur = (e: FocusEvent<HTMLInputElement>) => {
     e.stopPropagation();
     setArrowCounter(-1);
+    const interval = setTimeout(updateShowDropdown, 200);
+    // @ts-ignore
+    timeOutIntervalRef.current = interval;
+  };
+
+  const updateShowDropdown = () => {
     setShowDropdown(false);
-  }, []);
+  }
 
   // @ts-ignore
-  const onSearchInputKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+  const onSearchInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const key: string = e.key;
 
     switch (key) {
       case 'Enter':
         if (showDropdown && options) {
-          onItemClick(options[arrowCounter]);
+          onItemClick(options[arrowCounter].value);
         }
         setShowDropdown(!showDropdown);
         break;
@@ -88,7 +103,13 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
         }
         break;
     }
-  }, [showDropdown, arrowCounter]);
+  };
+
+  const onTopClick = (e: any) => {
+    if (e.target.role === 'option') {
+      onItemClick(e.target.id);
+    }
+  }
 
   return (
     <div ref={elRef} className="combo-box-container">
@@ -97,9 +118,10 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
            className={`combo-box-input ${showDropdown ? 'open' : ''} ${searchValue ? 'selected' : ''}`}>
         <input onChange={onSearch}
                onBlur={onInputBlur}
+               onKeyDown={onSearchInputKeyDown}
                value={searchValue}
                data-testid="comboBoxSearchInput"
-               placeholder="Choose a Fruit:" onKeyDown={onSearchInputKeyDown}
+               placeholder="Choose a Fruit:"
                role="combobox"
                aria-expanded={showDropdown}
                aria-controls="fruits"
@@ -108,23 +130,24 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
         <Icon />
       </div>
       {showDropdown && (
-        <div id="fruits"
+        <ul id="fruits"
+             onClick={onTopClick}
              className="combo-box-menu"
              data-testid="comboBoxDropdown"
              aria-label="Fruits list"
              role="listbox">
           {options?.map((option, index) => (
-            <div
-              onClick={() => onItemClick(option)}
+            <li
+              id={option.value}
               key={option.value}
               className={`combo-box-item ${isSelected(option) && "selected"} ${arrowCounter === index && "selected"}`}
               role="option"
               aria-selected={isSelected(option)}
             >
               {option.label}
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

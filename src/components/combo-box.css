@@ -57,6 +57,13 @@
     z-index: 99;
 }
 
+ul {
+    list-style: none;
+    margin-block-start: 0;
+    margin-block-end: 0;
+    padding-inline-start: 0;
+}
+
 .combo-box-item {
     font-size: 12px;
     padding: 10px;
