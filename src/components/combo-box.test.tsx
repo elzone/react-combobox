@@ -1,11 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import ComboBox, { IComboBox } from './combo-box';
-import { wait } from '@testing-library/user-event/dist/utils';
 
 const options: IComboBox[] = [
   { label: 'Apple', value: 'Apple'},
   { label: 'Banana', value: 'Banana'}
 ];
+
+afterEach(cleanup);
 
 test('renders dropdown list with correct options', () => {
   render(<ComboBox items={options} />);
@@ -14,19 +15,19 @@ test('renders dropdown list with correct options', () => {
   expect(dropdownList.childNodes.length).toBe(options.length);
 });
 
-test('select second item in dropdown list', () => {
+test('select second item in dropdown list', async () => {
   render(<ComboBox items={options} />);
   fireEvent.click(screen.getByTestId('comboBoxInput'));
   const dropdownList = screen.getByTestId('comboBoxDropdown');
-  fireEvent.click(dropdownList.childNodes[1]);
+  fireEvent.click(dropdownList.childNodes[1], {target: {role: 'option'}});
   const searchInput: HTMLInputElement = screen.getByTestId('comboBoxSearchInput');
   expect(searchInput.value).toBe('Banana');
 });
 
-test('stop render dropdown on search input blur', () => {
+test('hide dropdown on keydown Tab', () => {
   render(<ComboBox items={options} />);
   fireEvent.click(screen.getByTestId('comboBoxInput'));
-  fireEvent.blur(screen.getByTestId('comboBoxSearchInput'));
+  fireEvent.keyDown(screen.getByTestId('comboBoxSearchInput'), {key: 'Tab'});
   const dropdownList = screen.queryByTestId('comboBoxDropdown');
   expect(dropdownList).toBe(null);
 });

@@ -25,15 +25,22 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
   const [arrowCounter, setArrowCounter] = useState<number>(-1);
   const elRef = useRef(null);
   useOnClickOutside(elRef, () => setShowDropdown(false));
-  const timeOutIntervalRef = useRef();
 
-  useEffect(() => {
-    return () => {
-      if (timeOutIntervalRef.current) {
-        clearTimeout(timeOutIntervalRef.current);
-      }
+  const options = useMemo(() => {
+    if (!searchValue) {
+      return items;
     }
-  }, []);
+
+    return items?.filter(
+      (item) =>
+        item.label.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0
+    );
+  }, [items, searchValue]);
+
+  const resetState = () => {
+    setShowDropdown(false);
+    setArrowCounter(-1);
+  }
 
   const handleInputClick = () => {
     setShowDropdown(true);
@@ -41,8 +48,7 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
 
   const onItemClick = (value: string) => {
     setSearchValue(value);
-    setShowDropdown(false);
-    setArrowCounter(-1);
+    resetState();
   };
 
   const isSelected = (option: IComboBox) => {
@@ -56,30 +62,6 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
   const onSearch = (e: ChangeEvent) => {
     setSearchValue((e.target as HTMLInputElement).value);
   };
-
-  const options = useMemo(() => {
-    if (!searchValue) {
-      return items;
-    }
-
-    return items?.filter(
-      (item) =>
-        item.label.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0
-    );
-  }, [items, searchValue]);
-
-  // @ts-ignore
-  const onInputBlur = (e: FocusEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    setArrowCounter(-1);
-    const interval = setTimeout(updateShowDropdown, 200);
-    // @ts-ignore
-    timeOutIntervalRef.current = interval;
-  };
-
-  const updateShowDropdown = () => {
-    setShowDropdown(false);
-  }
 
   // @ts-ignore
   const onSearchInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -102,13 +84,16 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
           setArrowCounter((prev) => prev - 1);
         }
         break;
+      case 'Tab':
+        resetState();
+        break;
     }
   };
 
-  const onTopClick = (e: any) => {
-    if (e.target.role === 'option') {
-      onItemClick(e.target.id);
-    }
+  // @ts-ignore
+  const onTopClick = (e: MouseEvent<HTMLElement>) => {
+    const element = e.target;
+    element.role === 'option' && onItemClick(element.id);
   }
 
   return (
@@ -117,7 +102,6 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
            data-testid="comboBoxInput"
            className={`combo-box-input ${showDropdown ? 'open' : ''} ${searchValue ? 'selected' : ''}`}>
         <input onChange={onSearch}
-               onBlur={onInputBlur}
                onKeyDown={onSearchInputKeyDown}
                value={searchValue}
                data-testid="comboBoxSearchInput"
@@ -131,11 +115,11 @@ const ComboBox: FC<ComboBoxProps> = ({items}) => {
       </div>
       {showDropdown && (
         <ul id="fruits"
-             onClick={onTopClick}
-             className="combo-box-menu"
-             data-testid="comboBoxDropdown"
-             aria-label="Fruits list"
-             role="listbox">
+            onClick={onTopClick}
+            className="combo-box-menu"
+            data-testid="comboBoxDropdown"
+            aria-label="Fruits list"
+            role="listbox">
           {options?.map((option, index) => (
             <li
               id={option.value}
